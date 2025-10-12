@@ -22,8 +22,8 @@ class Catalog:
 
     def metadata(self,package):
         assert package in self.index, f"{package} is not in catalog index"
-        toml = os.path.join(self.DATA,package,"refs","heads","main","pyproject.toml")
-        with urllib.request.urlopen(toml) as query:
+        url = os.path.join(self.DATA,package,"refs","heads","main","pyproject.toml")
+        with urllib.request.urlopen(url) as query:
             return tomllib.loads(query.read().decode('utf-8'))
 
 if __name__ == "__main__":
@@ -42,7 +42,7 @@ if __name__ == "__main__":
             except KeyError:
                 description = ""
             try:
-                version = info["version"]
+                version = info["project"]["version"]
             except KeyError:
                 version = ""
             result[package] = {x:eval(x) for x in header}

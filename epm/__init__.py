@@ -12,6 +12,8 @@ Commands:
 
     help: get this help
 
+    index: get list of available packages
+
     list: get list of installed packages
 """
 
@@ -60,6 +62,8 @@ def main(
     try:
         E_OK = 0
         E_SYNTAX = 1
+        E_FAILED = 2
+        E_NOTFOUND = 3
         E_EXCEPTION = 9
 
         if len(args) == 0:
@@ -91,8 +95,8 @@ def main(
             stdout(list())
             return E_OK
 
-        # catalog - get list of available packages
-        if args[0] == "catalog":
+        # index - get list of available packages
+        if args[0] == "index":
 
             catalog = Catalog()
             if catalog.index:
@@ -101,12 +105,13 @@ def main(
                 underline = {x:len(x) for x in header}
                 for package in catalog.index:
                     info = Catalog().metadata(package)
+                    import json
                     try:
                         description = info["project"]["description"]
                     except KeyError:
                         description = ""
                     try:
-                        version = info["version"]
+                        version = info["project"]["version"]
                     except KeyError:
                         version = ""
                     result[package] = {x:eval(x) for x in header}
@@ -118,6 +123,21 @@ def main(
             return E_OK
 
         # install - install packages
+        if args[0] == "install" and len(args) > 1:
+
+            catalog = Catalog(args[1])
+            if not catalog.index:
+                stderr(f"no packages match '{args[1]}'")
+                return E_NOTFOUND
+            errors = 0
+            for package in catalog.index:
+                code = os.system(f"pip install git+{catalog.repository(package)}")
+                if code != 0:
+                    stderr(f"'{package}' install failed --> error code {code}")
+                    errors += 1
+            return E_OK if not errors else E_FAILED
+
+
 
         # uninstall - uninstall packages
 
@@ -136,4 +156,4 @@ def main(
 
 if __name__ == "__main__":
 
-    main(['catalog'])
+    main(['index'])
