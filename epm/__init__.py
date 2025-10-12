@@ -4,6 +4,8 @@ Syntax: epm [OPTIONS ...] COMMAND [ARGUMENTS ...]
 
 Options:
 
+    --debug: enable traceback of exceptions
+
     -h|--help: get this help
 
     -v|--version: get the EPM version number
@@ -12,9 +14,17 @@ Commands:
 
     help: get this help
 
-    index: get list of available packages
+    index [PATTERN [...]]: get list of available packages
 
-    list: get list of installed packages
+    install NAME [...]: install packages
+
+    list [PATTERN [...]]: get list of installed packages
+
+    open NAME [...]: open package repositories
+
+    uninstall NAME [...]: uninstall packages
+
+    upgrade NAME [...]: upgrade packages
 """
 
 import os
@@ -22,6 +32,7 @@ import sys
 import re
 import importlib.metadata
 import warnings
+import webbrowser
 try:
     from .catalog import Catalog
 except ImportError:
@@ -31,8 +42,10 @@ try:
 except importlib.metadata.PackageNotFoundError:
     __version__ = "dev"
 
-def list(pattern:str=None) -> list[list[str]]:
+DEBUG=False
 
+def list(pattern:str=None) -> list[list[str]]:
+    """Get list of installed Eudoxys packages"""
     result = []
     for package in importlib.metadata.distributions():
         name = package.name
@@ -45,12 +58,9 @@ def list(pattern:str=None) -> list[list[str]]:
             except (KeyError, DeprecationWarning):
                 keywords = None
             if "eudoxys" in str(keywords).split(","):
-                description = " / ".join([x for x in info['Description'].split("\n") if x and not x.startswith("#")])
-                version = info["Version"]
-                result.append([name,version,description])
+                result.append(name)
 
     return result
-
 
 def main(
     args:list=sys.argv[1:],
@@ -58,13 +68,17 @@ def main(
     stderr:callable=lambda x: print(x if x.startswith("Syntax: ") else f"ERROR [epm]: {x}",file=sys.stderr),
     exceptions:list=None
     ):
+    """Main routine"""
+
+    global DEBUG
+
+    E_OK = 0
+    E_SYNTAX = 1
+    E_FAILED = 2
+    E_NOTFOUND = 3
+    E_EXCEPTION = 9
 
     try:
-        E_OK = 0
-        E_SYNTAX = 1
-        E_FAILED = 2
-        E_NOTFOUND = 3
-        E_EXCEPTION = 9
 
         if len(args) == 0:
 
@@ -75,12 +89,16 @@ def main(
         # Options
         #
 
-        if args[0] in ["-h","--help","help"]:
+        if args[0] in ["--debug"]:
+
+            DEBUG = True
+
+        elif args[0] in ["-h","--help","help"]:
 
             stdout(__doc__)
             return E_OK
 
-        if args[0] in ["-v","--version"]:
+        elif args[0] in ["-v","--version"]:
 
             stdout(__version__)
             return E_OK
@@ -90,64 +108,75 @@ def main(
         #
 
         # list - get list of installed packages
-        if args[0] == "list":
+        elif args[0] == "list":
 
-            stdout(list())
+            catalog = Catalog(list())
+            catalog.print(print=stdout)
             return E_OK
 
         # index - get list of available packages
-        if args[0] == "index":
+        elif args[0] == "index":
 
             catalog = Catalog()
-            if catalog.index:
-                result = {}
-                header = ["package","version","description"]
-                underline = {x:len(x) for x in header}
-                for package in catalog.index:
-                    info = Catalog().metadata(package)
-                    import json
-                    try:
-                        description = info["project"]["description"]
-                    except KeyError:
-                        description = ""
-                    try:
-                        version = info["project"]["version"]
-                    except KeyError:
-                        version = ""
-                    result[package] = {x:eval(x) for x in header}
-                    underline = {x:max(underline[x],len(eval(x))) for x in header}
-                print(" ".join([x.title()+" "*(underline[x]-len(x)) for x in header]))
-                print(" ".join(['-'*underline[x] for x in header]))
-                for package,info in result.items():
-                    print(" ".join([y+" "*(underline[x]-len(y)) for x,y in info.items()]))
+            catalog.print(print=stdout)
             return E_OK
 
         # install - install packages
-        if args[0] == "install" and len(args) > 1:
+        elif args[0] == "install" and len(args) > 1:
 
-            catalog = Catalog(args[1])
-            if not catalog.index:
-                stderr(f"no packages match '{args[1]}'")
-                return E_NOTFOUND
             errors = 0
-            for package in catalog.index:
-                code = os.system(f"pip install git+{catalog.repository(package)}")
-                if code != 0:
-                    stderr(f"'{package}' install failed --> error code {code}")
-                    errors += 1
+            for arg in args[1:]:
+                catalog = Catalog(arg)
+                if not catalog.index:
+                    stderr(f"no packages match '{arg}'")
+                    return E_NOTFOUND
+                for package in catalog.index:
+                    code = os.system(f"pip install git+{catalog.repository(package)}")
+                    if code != 0:
+                        stderr(f"'{package}' install failed --> error code {code}")
+                        errors += 1
             return E_OK if not errors else E_FAILED
 
-
-
         # uninstall - uninstall packages
+        elif args[0] == "uninstall" and len(args) > 1:
+
+            errors = 0
+            for arg in args[1:]:
+                if arg in list():
+                    code = os.system(f"pip uninstall -y {arg}")
+                    if code != 0:
+                        stderr(f"'{arg}' uninstall failed --> error code {code}")
+                        errors != 1
+            return E_OK if not errors else E_FAILED
 
         # upgrade - upgrade packages
+        elif args[0] == "upgrade" and len(args) > 1:
+
+            errors = 0
+            for arg in args[1:]:
+                catalog = Catalog(arg)
+                if not catalog.index:
+                    stderr(f"no packages match '{arg}'")
+                    return E_NOTFOUND
+                for package in catalog.index:
+                    code = os.system(f"pip install --upgrade git+{catalog.repository(package)}")
+                    if code != 0:
+                        stderr(f"'{package}' install failed --> error code {code}")
+                        errors += 1
+            return E_OK if not errors else E_FAILED
 
         # open - open package webpage
+        elif args[0] == "open" and len(args) == 2:
+
+            url = os.path.join(Catalog.REPO,args[1])
+            webbrowser.open(url,new=1,autoraise=True)
+            return E_OK
 
         raise ValueError(f"'{args[0]}' is an invalid command")
 
     except:
+        if DEBUG:
+            raise
         e_type,e_value,e_trace = sys.exc_info()
         if e_type in exceptions if exceptions else []:
             raise
