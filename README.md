@@ -47,3 +47,9 @@ Get the `epm` version number
 Get help
 
     epm help
+
+## Technical Guide
+
+Packages are added to the index by including them in the [DATA](https://github.com/eudoxys/epm/blob/143eaf75be8cca8609da5d28ee9fc92e874435d1/epm/catalog.py#L12) list of the `Catalog` class.
+
+Eudoxys repositories must include the `description` and `version` entries in the `project` section of their `pyproject.toml` file.
