@@ -17,7 +17,7 @@ classifiers = [
 ]
 dependencies = [
 ]
-dynamic = ["version"]
+version = "0.0.0a0"
 
 [tool.setuptools]
 packages = [
