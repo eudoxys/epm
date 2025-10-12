@@ -22,4 +22,28 @@ To install a package
 
     epm install NAME
 
+To upgrade a package
 
+    epm upgrade NAME
+
+To uninstall a package
+
+    epm uninstall NAME
+
+To open a package's web page
+
+    epm open NAME
+
+## Options
+
+Enable debugging traceback of exceptions:
+
+    epm --debug ...
+
+Get the `epm` version number
+
+    epm --version
+
+Get help
+
+    epm help
