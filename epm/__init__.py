@@ -12,15 +12,13 @@ Options:
 
 Commands:
 
-    help: get this help
+    help [PACKAGE ...]: get help on packages
 
     index [PATTERN [...]]: get list of available packages
 
     install NAME [...]: install packages
 
     list [PATTERN [...]]: get list of installed packages
-
-    open NAME [...]: open package repositories
 
     uninstall NAME [...]: uninstall packages
 
@@ -51,12 +49,12 @@ def list(pattern:str=None) -> list[list[str]]:
         name = package.name
         if not pattern or re.match(pattern,name):
             info = importlib.metadata.distribution(package.name).metadata
+            warnings.filterwarnings("error")
             try:
-                warnings.filterwarnings("error")
                 keywords = info["Keywords"]
-                warnings.resetwarnings()
-            except (KeyError, DeprecationWarning):
+            except (KeyError,DeprecationWarning):
                 keywords = None
+            warnings.resetwarnings()
             if "eudoxys" in str(keywords).split(","):
                 result.append(name)
 
@@ -93,7 +91,7 @@ def main(
 
             DEBUG = True
 
-        elif args[0] in ["-h","--help","help"]:
+        elif args[0] in ["-h","--help"]:
 
             stdout(__doc__)
             return E_OK
@@ -166,10 +164,16 @@ def main(
             return E_OK if not errors else E_FAILED
 
         # open - open package webpage
-        elif args[0] == "open" and len(args) == 2:
+        elif args[0] == "help":
 
-            url = os.path.join(Catalog.REPO,args[1])
-            webbrowser.open(url,new=1,autoraise=True)
+            for arg in args[1:] if len(args) > 1 else ["epm"]:
+
+                if not arg in Catalog.LIST:
+                    stderr(f"'{arg}' is not a valid Eudoxys package")
+                else:
+                    url = os.path.join(Catalog.REPO,arg)
+                    webbrowser.open(url,new=1,autoraise=True)
+
             return E_OK
 
         raise ValueError(f"'{args[0]}' is an invalid command")

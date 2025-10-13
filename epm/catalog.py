@@ -11,7 +11,7 @@ class Catalog:
     DATA = "https://raw.githubusercontent.com/eudoxys"
     LIST = [   
         "epm",
-        "load_modeling",
+        "load_model",
     ]
 
     def __init__(self,pattern:list[str]|str=None):
