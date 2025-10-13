@@ -6,19 +6,19 @@ Options:
 
     --debug: enable traceback of exceptions
 
-    -h|--help: get this help
+    -h|--help: output this help
 
-    -v|--version: get the EPM version number
+    -v|--version: output the EPM version number
 
 Commands:
 
-    help [PACKAGE ...]: get help on packages
+    help [PACKAGE ...]: open help on packages
 
-    index [PATTERN [...]]: get list of available packages
+    index [PATTERN [...]]: output list of available packages
 
     install NAME [...]: install packages
 
-    list [PATTERN [...]]: get list of installed packages
+    list [PATTERN [...]]: output list of installed packages
 
     uninstall NAME [...]: uninstall packages
 
@@ -91,12 +91,12 @@ def main(
 
             DEBUG = True
 
-        elif args[0] in ["-h","--help"]:
+        if args[0] in ["-h","--help"]:
 
             stdout(__doc__)
             return E_OK
 
-        elif args[0] in ["-v","--version"]:
+        if args[0] in ["-v","--version"]:
 
             stdout(__version__)
             return E_OK
@@ -104,6 +104,19 @@ def main(
         #
         # Commands
         #
+
+        # help - open package webpage
+        if args[0] == "help":
+
+            for arg in args[1:] if len(args) > 1 else ["epm"]:
+
+                if not arg in Catalog.LIST:
+                    stderr(f"'{arg}' is not a valid Eudoxys package")
+                else:
+                    url = os.path.join(Catalog.REPO,arg)
+                    webbrowser.open(url,new=1,autoraise=True)
+
+            return E_OK
 
         # list - get list of installed packages
         elif args[0] == "list":
@@ -162,19 +175,6 @@ def main(
                         stderr(f"'{package}' install failed --> error code {code}")
                         errors += 1
             return E_OK if not errors else E_FAILED
-
-        # open - open package webpage
-        elif args[0] == "help":
-
-            for arg in args[1:] if len(args) > 1 else ["epm"]:
-
-                if not arg in Catalog.LIST:
-                    stderr(f"'{arg}' is not a valid Eudoxys package")
-                else:
-                    url = os.path.join(Catalog.REPO,arg)
-                    webbrowser.open(url,new=1,autoraise=True)
-
-            return E_OK
 
         raise ValueError(f"'{args[0]}' is an invalid command")
 
