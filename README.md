@@ -52,4 +52,4 @@ Get help
 
 Packages are added to the index by including them in the [DATA](https://github.com/eudoxys/epm/blob/143eaf75be8cca8609da5d28ee9fc92e874435d1/epm/catalog.py#L12) list of the `Catalog` class.
 
-Eudoxys repositories must include the `description` and `version` entries in the `project` section of their `pyproject.toml` file.
+Eudoxys repositories must include the `description` and `version` entries in the `project` section of their `pyproject.toml` file. In addition, the 'keywords' must include `eudoxys` for the package to appear in the `list` command output.
