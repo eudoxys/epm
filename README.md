@@ -1,8 +1,8 @@
-# Eudoxys package manager
+# Eudoxys product manager
 
 ## Installation
 
-To install the Eudoxys package manager
+To install the Eudoxys product manager
 
     python3 -m venv .venv
     . .venv/bin/activate
@@ -10,27 +10,27 @@ To install the Eudoxys package manager
 
 ## Usage
 
-To get the index of available packages
+To get the index of available products
 
     epm index
 
-To get a list of installed packages
+To get a list of installed products
 
     epm list
 
-To install a package
+To install a product
 
     epm install NAME
 
-To upgrade a package
+To upgrade a product
 
     epm upgrade NAME
 
-To uninstall a package
+To uninstall a product
 
     epm uninstall NAME
 
-To open a package's web page
+To open a product's web page
 
     epm open NAME
 
@@ -50,6 +50,12 @@ Get help
 
 ## Technical Guide
 
-Packages are added to the index by including them in the [DATA](https://github.com/eudoxys/epm/blob/143eaf75be8cca8609da5d28ee9fc92e874435d1/epm/catalog.py#L12) list of the `Catalog` class.
+Products are added to the index by including them in the [LIST](https://github.com/eudoxys/epm/blob/143eaf75be8cca8609da5d28ee9fc92e874435d1/epm/catalog.py#L12) list of the `Catalog` class.
 
-Eudoxys repositories must include the `description` and `version` entries in the `project` section of their `pyproject.toml` file. In addition, the 'keywords' must include `eudoxys` for the package to appear in the `list` command output.
+Eudoxys repositories must include the `description` and `version` entries in the `project` section of their `pyproject.toml` file. In addition, the 'keywords' must include `eudoxys` for the product to appear in the `list` command output.
+
+Product types include the following flags:
+
+- 'M' a module is included in the product
+- 'P' packages are include in the product
+- 'C' a command line interface (CLI) is included in the product

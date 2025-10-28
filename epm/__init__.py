@@ -1,4 +1,4 @@
-"""Eudoxys package manager
+"""Eudoxys product manager
 
 Syntax: epm [OPTIONS ...] COMMAND [ARGUMENTS ...]
 
@@ -45,10 +45,10 @@ DEBUG=False
 def list(pattern:str=None) -> list[list[str]]:
     """Get list of installed Eudoxys packages"""
     result = []
-    for package in importlib.metadata.distributions():
-        name = package.name
+    for product in importlib.metadata.distributions():
+        name = product.name
         if not pattern or re.match(pattern,name):
-            info = importlib.metadata.distribution(package.name).metadata
+            info = importlib.metadata.distribution(product.name).metadata
             warnings.filterwarnings("error")
             try:
                 keywords = info["Keywords"]
@@ -106,13 +106,13 @@ def main(
         # Commands
         #
 
-        # help - open package webpage
+        # help - open product webpage
         if args[0] == "help":
 
             for arg in args[1:] if len(args) > 1 else ["epm"]:
 
                 if not arg in Catalog.LIST:
-                    stderr(f"'{arg}' is not a valid Eudoxys package")
+                    stderr(f"'{arg}' is not a valid Eudoxys product")
                 else:
                     url = os.path.join(Catalog.REPO,arg)
                     webbrowser.open(url,new=1,autoraise=True)
@@ -142,10 +142,10 @@ def main(
                 if not catalog.index:
                     stderr(f"no packages match '{arg}'")
                     return E_NOTFOUND
-                for package in catalog.index:
-                    code = os.system(f"pip install git+{catalog.repository(package)}")
+                for product in catalog.index:
+                    code = os.system(f"pip install git+{catalog.repository(product)}")
                     if code != 0:
-                        stderr(f"'{package}' install failed --> error code {code}")
+                        stderr(f"'{product}' install failed --> error code {code}")
                         errors += 1
             return E_OK if not errors else E_FAILED
 
@@ -170,10 +170,10 @@ def main(
                 if not catalog.index:
                     stderr(f"no packages match '{arg}'")
                     return E_NOTFOUND
-                for package in catalog.index:
-                    code = os.system(f"pip install --upgrade git+{catalog.repository(package)}")
+                for product in catalog.index:
+                    code = os.system(f"pip install --upgrade git+{catalog.repository(product)}")
                     if code != 0:
-                        stderr(f"'{package}' install failed --> error code {code}")
+                        stderr(f"'{product}' install failed --> error code {code}")
                         errors += 1
             return E_OK if not errors else E_FAILED
 

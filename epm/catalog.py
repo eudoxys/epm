@@ -1,4 +1,4 @@
-"""Eudoxys package catalog"""
+"""Eudoxys product catalog"""
 
 import os
 import sys
@@ -39,13 +39,13 @@ class Catalog:
         else:
             self.index = [x for x in self.LIST if not pattern or re.match(pattern,x)]
 
-    def repository(self,package):
-        assert package in self.index, f"{package} is not in catalog index"
-        return os.path.join(self.REPO,package)
+    def repository(self,product):
+        assert product in self.index, f"{product} is not in catalog index"
+        return os.path.join(self.REPO,product)
 
-    def metadata(self,package):
-        assert package in self.index, f"{package} is not in catalog index"
-        url = os.path.join(self.DATA,package,"refs","heads","main","pyproject.toml")
+    def metadata(self,product):
+        assert product in self.index, f"{product} is not in catalog index"
+        url = os.path.join(self.DATA,product,"refs","heads","main","pyproject.toml")
         try:
             with urllib.request.urlopen(url) as query:
                 return tomllib.loads(query.read().decode('utf-8'))
@@ -59,10 +59,10 @@ class Catalog:
     def print(self,print=print):
         if self.index:
             result = {}
-            header = ["package","version","description"]
+            header = ["product","version","type","description"]
             underline = {x:len(x) for x in header}
-            for package in self.index:
-                info = Catalog().metadata(package)
+            for product in self.index:
+                info = Catalog().metadata(product)
                 if info:
                     import json
                     try:
@@ -73,11 +73,20 @@ class Catalog:
                         version = info["project"]["version"]
                     except KeyError:
                         version = ""
-                    result[package] = {x:eval(x) for x in header}
+                    type = "M"
+                    if "tools" in info and "setuptools" in info["tools"] and "packages" in info["tools"]["setuptools"]:
+                        type += "P"
+                    else:
+                        type += "-"
+                    if "project" in info and "scripts" in info["project"] and len(info["project"]["scripts"]) > 0:
+                        type += "C"
+                    else:
+                        type += "-"
+                    result[product] = {x:eval(x) for x in header}
                     underline = {x:max(underline[x],len(eval(x))) for x in header}
             print(" ".join([x.title()+" "*(underline[x]-len(x)) for x in header]))
             print(" ".join(['-'*underline[x] for x in header]))
-            for package,info in result.items():
+            for product,info in result.items():
                 print(" ".join([y+" "*(underline[x]-len(y)) for x,y in info.items()]))
 
 
@@ -87,23 +96,3 @@ if __name__ == "__main__":
 
     catalog = Catalog()
     catalog.print()
-    # if catalog.index:
-    #     result = {}
-    #     header = ["package","version","description"]
-    #     underline = {x:len(x) for x in header}
-    #     for package in catalog.index:
-    #         info = Catalog().metadata(package)
-    #         try:
-    #             description = info["project"]["description"]
-    #         except KeyError:
-    #             description = ""
-    #         try:
-    #             version = info["project"]["version"]
-    #         except KeyError:
-    #             version = ""
-    #         result[package] = {x:eval(x) for x in header}
-    #         underline = {x:max(underline[x],len(eval(x))) for x in header}
-    #     print(" ".join([x.title()+" "*(underline[x]-len(x)) for x in header]))
-    #     print(" ".join(['-'*underline[x] for x in header]))
-    #     for package,info in result.items():
-    #         print(" ".join([y+" "*(underline[x]-len(y)) for x,y in info.items()]))
