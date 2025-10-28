@@ -50,7 +50,7 @@ Get help
 
 ## Technical Guide
 
-Products are added to the index by including them in the [LIST](https://github.com/eudoxys/epm/blob/143eaf75be8cca8609da5d28ee9fc92e874435d1/epm/catalog.py#L12) list of the `Catalog` class.
+Products are added to the index by including them in the [LIST](https://github.com/eudoxys/epm/blob/main/epm/catalog.py#L16) list of the `Catalog` class.
 
 Eudoxys repositories must include the `description` and `version` entries in the `project` section of their `pyproject.toml` file. In addition, the 'keywords' must include `eudoxys` for the product to appear in the `list` command output.
 
