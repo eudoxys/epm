@@ -59,3 +59,4 @@ Product types include the following flags:
 - 'M' a module is included in the product
 - 'P' packages are include in the product
 - 'C' a command line interface (CLI) is included in the product
+- 'E' product is an official Eudoxys release

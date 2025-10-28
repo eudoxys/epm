@@ -82,6 +82,10 @@ class Catalog:
                         type += "C"
                     else:
                         type += "-"
+                    if "keywords" in info["project"] and "eudoxys" in info["project"]["keywords"]:
+                        type += "E"
+                    else:
+                        type += "-"
                     result[product] = {x:eval(x) for x in header}
                     underline = {x:max(underline[x],len(eval(x))) for x in header}
             print(" ".join([x.title()+" "*(underline[x]-len(x)) for x in header]))
