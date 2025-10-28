@@ -90,6 +90,7 @@ def main(
         if args[0] in ["--debug"]:
 
             DEBUG = True
+            del args[0]
 
         if args[0] in ["-h","--help"]:
 
