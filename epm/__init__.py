@@ -38,7 +38,7 @@ except ImportError:
 try:
     __version__ = importlib.metadata.version('epm')
 except importlib.metadata.PackageNotFoundError:
-    __version__ = "0.0.0"
+    __version__ = "dev"
 
 DEBUG=False
 
