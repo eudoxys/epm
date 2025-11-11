@@ -17,7 +17,7 @@ class Catalog:
         "eia",
         "epm",
         "eudoxys",
-        "geocode",
+        "geohash",
         "gld_pypower",
         "load_model",
         "loaddata",
