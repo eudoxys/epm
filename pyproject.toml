@@ -4,26 +4,36 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "epm"
-version = "0.0.0"
+version = "0.0.1"
 authors = [
     { name = "David P. Chassin", email = "dchassin@eudoxys.com" }
 ]
-description = "Eudoxys package manager"
+maintainers = [
+    {name = "David P. Chassin <dpchassin@gmail.com>"},
+    ]
+description = "Eudoxys Package Manager"
 readme = "README.md"
 requires-python = ">=3.10"
 keywords = ["eudoxys","package","manager"]
-license = "MIT"
+license = {text="MIT"}
 classifiers = [
     "Programming Language :: Python :: 3",
 ]
-dependencies = [
-]
+dynamic = ["dependencies"]
 
 [tool.setuptools]
 packages = [
     "epm"
 ]
 
+[tool.setuptools.dynamic]
+dependencies = {file = "requirements.txt"}
+
 [project.scripts]
 epm = "epm:main"
 
+[project.urls]
+Homepage = "https://github.com/eudoxys/epm"
+Documentation = "https://www.eudoxys.com/epm"
+Repository = "https://github.com/eudoxys/epm.git"
+Issues = "https://github.com/eudoxys/epm/issues"

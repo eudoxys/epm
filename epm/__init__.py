@@ -42,24 +42,6 @@ except importlib.metadata.PackageNotFoundError:
 
 DEBUG=False
 
-def list(pattern:str=None) -> list[list[str]]:
-    """Get list of installed Eudoxys packages"""
-    result = []
-    for product in importlib.metadata.distributions():
-        name = product.name
-        if not pattern or re.match(pattern,name):
-            info = importlib.metadata.distribution(product.name).metadata
-            warnings.filterwarnings("error")
-            try:
-                keywords = info["Keywords"]
-            except (KeyError,DeprecationWarning):
-                keywords = None
-            warnings.resetwarnings()
-            if "eudoxys" in str(keywords).split(","):
-                result.append(name)
-
-    return result
-
 def main(
     args:list=sys.argv[1:],
     stdout:callable=lambda x: print(x,file=sys.stdout),
@@ -111,7 +93,7 @@ def main(
 
             for arg in args[1:] if len(args) > 1 else ["epm"]:
 
-                if not arg in Catalog.LIST:
+                if not arg in Catalog().LIST:
                     stderr(f"'{arg}' is not a valid Eudoxys product")
                 else:
                     url = os.path.join(Catalog.REPO,arg)
@@ -122,15 +104,16 @@ def main(
         # list - get list of installed packages
         elif args[0] == "list":
 
-            catalog = Catalog(list())
-            catalog.print(print=stdout)
+            pattern = args[1] if len(args) > 1 else '.*'
+            catalog = Catalog()
+            print("\n".join(sorted([x for x in catalog.LIST if re.match(pattern,x)])))
             return E_OK
 
         # index - get list of available packages
         elif args[0] == "index":
 
             catalog = Catalog()
-            catalog.print(print=stdout)
+            catalog.print(print=stdout,all=True)
             return E_OK
 
         # install - install packages
