@@ -18,25 +18,8 @@ class Catalog:
     DATA = "https://raw.githubusercontent.com/eudoxys"
     """Repository data access path"""
 
-    LIST = None # flag for scanning repos instead of explicit list
+    LIST = None # `None` to scan repos instead of explicit list
     """Default list of packages (use `None` to scan repositories)"""
-    # LIST = [   
-    #     "eia",
-    #     "epm",
-    #     "eudoxys",
-    #     "geohash",
-    #     "gld_pypower",
-    #     "load_model",
-    #     "loaddata",
-    #     "mailer",
-    #     "mguid",
-    #     "nsrdb",
-    #     "project",
-    #     "pypower_api",
-    #     "qdox",
-    #     "retail",
-    #     "states",
-    # ]
 
     CACHEFILE = None # os.path.join(os.environ['HOME'],".epm_list")
     """Catalog cache file (`None` to disable cache)"""
@@ -57,7 +40,22 @@ class Catalog:
             self.index = [x for x in self.LIST if not pattern or re.match(pattern,x)]
 
     classmethod
-    def scanrepos(cls,refresh=False):
+    def scanrepos(cls,
+        refresh=False,
+        ):
+        """Scan org repos for packages
+
+        Arguments
+        ---------
+
+        - `refresh`: force refresh of cache if `epm.catalog.CACHEFILE` is not `None`
+
+        Description
+        -----------
+
+        This class method set `epm.catalog.LIST` by scanning the organization
+        repositories.
+        """
         if not cls.CACHEFILE is None and os.path.exists(cls.CACHEFILE):
             with open(cls.CACHEFILE,"r") as fh:
                 cls.LIST = json.load(fh)
@@ -96,10 +94,24 @@ class Catalog:
                     json.dump(cls.LIST,fh,indent=4)
                 
     def repository(self,product):
+        """Get repository from product name
+
+        Arguments
+        ---------
+
+        - `product`: package name
+        """
         assert product in self.index, f"{product} is not in catalog index"
         return os.path.join(self.REPO,product)
 
     def metadata(self,product):
+        """Get repository metadata from product name
+
+        Arguments
+        ---------
+
+        - `product`: package name
+        """
         assert product in self.index, f"{product} is not in catalog index"
         url = os.path.join(self.DATA,product,"refs","heads","main","pyproject.toml")
         try:
@@ -112,7 +124,19 @@ class Catalog:
             e_type,e_value,e_trace = sys.exc_info()
             raise CatalogError(f"({e_type.__name__}) {e_value} from {url=}")
 
-    def print(self,print=print,all=False):
+    def print(self,
+        print=print,
+        all=False,
+        ):
+        """Print catalog
+
+        Arguments
+        ---------
+
+        - `print`: print call (defaults to `print`)
+
+        - `all`: flag is enable printing all packages
+        """
         if self.index:
             result = {}
             header = ["product","version","type","description"]
