@@ -1,3 +1,5 @@
+[![Deploy Pages](https://github.com/eudoxys/epm/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/eudoxys/epm/actions/workflows/deploy-pages.yml)
+
 # Eudoxys product manager
 
 For documentation see https://www.eudoxys.com/epm.
