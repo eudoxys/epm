@@ -136,6 +136,24 @@ class Catalog:
         - `print`: print call (defaults to `print`)
 
         - `all`: flag is enable printing all packages
+
+        Description
+        -----------
+
+        The following columns are output.
+
+        - **Product**: The package name used by `pip` after installation.
+        
+        - **Version**: The latest package release version number.
+
+        - **Type**: The package type information, i.e.,
+          - `M`: Eudoxys managed package using `epm`
+          - `P`: Setuptools supported (deprecated setup)
+          - `C`: Command script supported
+          - 'E': Eudoxys support enabled (official release)
+
+        - **Description**: The description from the `pyproject.toml` file.
+        
         """
         if self.index:
             result = {}
