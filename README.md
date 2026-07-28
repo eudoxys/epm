@@ -1,5 +1,7 @@
 # Eudoxys product manager
 
+For documentation see https://www.eudoxys.com/epm.
+
 ## Installation
 
 To install the Eudoxys product manager
