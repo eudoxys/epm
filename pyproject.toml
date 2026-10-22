@@ -1,39 +1,55 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm"]
+requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["epm"]
+
+[tool.setuptools.package-data]
+# list every file pattern the package reads at run time
+epm = ["*.py"]
+
+[tool.setuptools.dynamic]
+dependencies = {file=["requirements.txt"]}
 
 [project]
 name = "epm"
-version = "0.0.1"
+version = "0.0.1" # 0.0.0 = unreleased (hidden by `epm index`)
+description = "Eudoxys Package Manager"
 authors = [
-    { name = "David P. Chassin", email = "dchassin@eudoxys.com" }
-]
+    {name = "David P. Chassin <dchassin@eudoxys.com>"},
+    ]
 maintainers = [
     {name = "David P. Chassin <dpchassin@gmail.com>"},
     ]
-description = "Eudoxys Package Manager"
 readme = "README.md"
-requires-python = ">=3.10"
-keywords = ["eudoxys","package","manager"]
-license = {text="MIT"}
+requires-python = ">=3.11" # tomllib; CI tests 3.11 through 3.13
+keywords = ["eudoxys","package","manager"] # "eudoxys" marks an official Eudoxys release
+license-files = ["LICENSE"]
 classifiers = [
-    "Programming Language :: Python :: 3",
-]
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: System :: Software Distribution",
+    ]
 dynamic = ["dependencies"]
-
-[tool.setuptools]
-packages = [
-    "epm"
-]
-
-[tool.setuptools.dynamic]
-dependencies = {file = "requirements.txt"}
-
-[project.scripts]
-epm = "epm:main"
 
 [project.urls]
 Homepage = "https://github.com/eudoxys/epm"
 Documentation = "https://www.eudoxys.com/epm"
 Repository = "https://github.com/eudoxys/epm.git"
 Issues = "https://github.com/eudoxys/epm/issues"
+
+[project.scripts]
+epm = "epm.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["epm/_test"]
+markers = [
+    "network: queries the GitHub API (needs network access)",
+    ]

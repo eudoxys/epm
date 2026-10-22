@@ -1,66 +1,87 @@
-[![Deploy Pages](https://github.com/eudoxys/epm/actions/workflows/deploy-pages.yml/badge.svg)](https://github.com/eudoxys/epm/actions/workflows/deploy-pages.yml)
+[![Validation](https://github.com/eudoxys/epm/actions/workflows/validate.yaml/badge.svg)](https://github.com/eudoxys/epm/actions/workflows/validate.yaml)
+[![Documentation](https://github.com/eudoxys/epm/actions/workflows/deploy-pages.yaml/badge.svg)](https://github.com/eudoxys/epm/actions/workflows/deploy-pages.yaml)
 
-# Eudoxys product manager
+Eudoxys Package Manager
 
-For documentation see https://www.eudoxys.com/epm.
+`epm` finds, installs, upgrades, and removes the Python packages published
+in the [eudoxys](https://github.com/eudoxys) GitHub organization. It scans the
+organization's repositories, reads each one's `pyproject.toml` from `main`,
+and runs `pip install git+https://github.com/eudoxys/NAME` for you.
 
-## Installation
+# Documentation
 
-To install the Eudoxys product manager
+See https://www.eudoxys.com/epm
+
+# Installation
 
     python3 -m venv .venv
     . .venv/bin/activate
-    pip install git+https://github.com/eudoxys/epm
+    pip install --upgrade git+https://github.com/eudoxys/epm
 
-## Usage
+`epm` requires Python 3.11 or later.
 
-To get the index of available products
+# Usage
+
+Get the index of available packages (add `--all` to include unreleased ones)
 
     epm index
 
-To get a list of installed products
+List the installed Eudoxys packages
 
     epm list
 
-To install a product
+Install, upgrade, or uninstall a package
 
     epm install NAME
-
-To upgrade a product
-
     epm upgrade NAME
-
-To uninstall a product
-
     epm uninstall NAME
 
-To open a product's web page
+Open a package's GitHub page
 
-    epm open NAME
+    epm help NAME
 
-## Options
+Other options
 
-Enable debugging traceback of exceptions:
+    epm --help       # command help
+    epm --version    # epm version number
+    epm --debug ...  # debug logging and traceback on exceptions
 
-    epm --debug ...
+# Publishing a package to `epm`
 
-Get the `epm` version number
+`epm` lists every repository in the organization that has a `pyproject.toml`.
+For a package to appear in `epm index`, its `[project]` section must have a
+`description` and a `version` greater than `0.0.0`; include `eudoxys` in
+`keywords` to flag it as an official Eudoxys release. See
+[Package types](https://www.eudoxys.com/epm#package-types) for the `Type`
+column flags.
 
-    epm --version
+# Maintenance
 
-Get help
+## Update docs
 
-    epm help
+    make docs
 
-## Technical Guide
+## Run tests
 
-Products are added to the index by including them in the [LIST](https://github.com/eudoxys/epm/blob/main/epm/catalog.py#L16) list of the `Catalog` class.
+    pip install -e . pytest
+    pytest
 
-Eudoxys repositories must include the `description` and `version` entries in the `project` section of their `pyproject.toml` file. In addition, the 'keywords' must include `eudoxys` for the product to appear in the `list` command output.
+The tests marked `network` query the GitHub API; skip them with
+`pytest -m "not network"`. See [`epm/_test/README.md`](epm/_test/README.md).
 
-Product types include the following flags:
+# Examples
 
-- 'M' a module is included in the product
-- 'P' packages are include in the product
-- 'C' a command line interface (CLI) is included in the product
-- 'E' product is an official Eudoxys release
+## Command line
+
+    epm index epm
+
+outputs
+
+    Product Version Type Description
+    ------- ------- ---- -----------------------
+    epm     0.0.1   MPCE Eudoxys Package Manager
+
+## Python
+
+    from epm import Catalog
+    Catalog("epm").print()

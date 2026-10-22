@@ -1,16 +1,52 @@
-"""Eudoxys package catalog"""
+"""Eudoxys package catalog
+
+Lists the repositories of the `eudoxys` GitHub organization and reads each
+one's `pyproject.toml` from its `main` branch.
+
+Examples
+--------
+
+    from epm import Catalog
+    Catalog("epm").print()
+
+outputs
+
+    Product Version Type Description
+    ------- ------- ---- -----------------------
+    epm     0.0.1   MPCE Eudoxys Package Manager
+
+Caveats
+-------
+
+  - Each `Catalog()` queries the GitHub API unless `Catalog.LIST` is set or
+    `Catalog.CACHEFILE` holds a cached list. Unauthenticated requests are
+    rate-limited by GitHub (60 per hour); put a token in
+    `Catalog.ACCESS_TOKEN` to raise the limit and to see private repositories.
+  - Version comparison against `0.0.0` is a string comparison.
+
+References
+----------
+
+  - https://docs.github.com/en/rest/repos/repos#list-organization-repositories
+"""
 
 import os
 import sys
 import re
+import json
+import logging
 import urllib.request
-import requests
 import tomllib
 
+import requests
+
+_logger = logging.getLogger(__file__)
+
 class CatalogError(Exception):
-    pass
+    """Catalog access error"""
 
 class Catalog:
+    """Index of the packages in the eudoxys GitHub organization"""
 
     REPO = "https://github.com/eudoxys"
     """Repository owner"""
@@ -24,10 +60,23 @@ class Catalog:
     CACHEFILE = None # os.path.join(os.environ['HOME'],".epm_list")
     """Catalog cache file (`None` to disable cache)"""
 
-    ACCESS_TOKEN = os.path.join(os.environ['HOME'],".github","access-token")
+    ACCESS_TOKEN = os.path.join(os.path.expanduser("~"),".github","access-token")
     """Access token file path"""
 
-    def __init__(self,pattern:list[str]|str=None):
+    def __init__(self,pattern:list[str]|str|None=None):
+        """Create a catalog index
+
+        Arguments
+        ---------
+
+        - `pattern`: regular expression (or list of them) matched against
+          package names (`None` for all packages)
+
+        Exceptions
+        ----------
+
+        - `CatalogError`: the GitHub organization could not be scanned
+        """
 
         if self.LIST is None:
             self.scanrepos()
@@ -39,10 +88,10 @@ class Catalog:
         else:
             self.index = [x for x in self.LIST if not pattern or re.match(pattern,x)]
 
-    classmethod
+    @classmethod
     def scanrepos(cls,
-        refresh=False,
-        ):
+        refresh:bool=False,
+        ) -> None:
         """Scan org repos for packages
 
         Arguments
@@ -56,8 +105,9 @@ class Catalog:
         This class method set `epm.catalog.LIST` by scanning the organization
         repositories.
         """
-        if not cls.CACHEFILE is None and os.path.exists(cls.CACHEFILE):
-            with open(cls.CACHEFILE,"r") as fh:
+        if not cls.CACHEFILE is None and os.path.exists(cls.CACHEFILE) and not refresh:
+            _logger.debug("reading catalog cache %s",cls.CACHEFILE)
+            with open(cls.CACHEFILE,"r",encoding="utf-8") as fh:
                 cls.LIST = json.load(fh)
         else:
             cls.LIST = []
@@ -67,17 +117,17 @@ class Catalog:
             # Set up headers with optional authentication for private repos
             headers = {"Accept": "application/vnd.github+json"}
             if os.path.exists(cls.ACCESS_TOKEN):
-                with open(cls.ACCESS_TOKEN,"r") as fh:
+                with open(cls.ACCESS_TOKEN,"r",encoding="utf-8") as fh:
                     token = fh.read().strip()
                     headers["Authorization"] = f"Bearer {token}"
             
             while True:
                 url = f"https://api.github.com/orgs/{'eudoxys'}/repos?page={page}&per_page={per_page}"
-                response = requests.get(url, headers=headers)
+                _logger.debug("scanning %s",url)
+                response = requests.get(url, headers=headers, timeout=30)
                 
                 if response.status_code != 200:
-                    print(f"Error fetching data: {response.status_code} - {response.text}")
-                    break
+                    raise CatalogError(f"unable to scan {url} ({response.status_code} - {response.text})")
                     
                 data = response.json()
                 
@@ -90,10 +140,10 @@ class Catalog:
                 page += 1
 
             if not cls.CACHEFILE is None:
-                with open(cls.CACHEFILE,"w") as fh:
+                with open(cls.CACHEFILE,"w",encoding="utf-8") as fh:
                     json.dump(cls.LIST,fh,indent=4)
                 
-    def repository(self,product):
+    def repository(self,product:str) -> str:
         """Get repository from product name
 
         Arguments
@@ -104,30 +154,36 @@ class Catalog:
         assert product in self.index, f"{product} is not in catalog index"
         return os.path.join(self.REPO,product)
 
-    def metadata(self,product):
+    def metadata(self,product:str) -> dict|None:
         """Get repository metadata from product name
 
         Arguments
         ---------
 
         - `product`: package name
+
+        Returns
+        -------
+
+        - `dict`: the parsed `pyproject.toml`, or `None` if the repository
+          has none
         """
         assert product in self.index, f"{product} is not in catalog index"
         url = os.path.join(self.DATA,product,"refs","heads","main","pyproject.toml")
         try:
             with urllib.request.urlopen(url) as query:
                 return tomllib.loads(query.read().decode('utf-8'))
-        except urllib.request.HTTPError as err:
-            if url.endswith("pyproject.toml"):
-                return None
-        except:
-            e_type,e_value,e_trace = sys.exc_info()
-            raise CatalogError(f"({e_type.__name__}) {e_value} from {url=}")
+        except urllib.request.HTTPError:
+            _logger.debug("%s has no pyproject.toml",product)
+            return None
+        except Exception as err: # pylint: disable=broad-exception-caught
+            e_type,e_value,_ = sys.exc_info()
+            raise CatalogError(f"({e_type.__name__}) {e_value} from {url=}") from err
 
     def print(self,
-        print=print,
-        all=False,
-        ):
+        print:callable=print, # pylint: disable=redefined-builtin,used-before-assignment
+        all:bool=False, # pylint: disable=redefined-builtin
+        ) -> None:
         """Print catalog
 
         Arguments
@@ -135,7 +191,7 @@ class Catalog:
 
         - `print`: print call (defaults to `print`)
 
-        - `all`: flag is enable printing all packages
+        - `all`: include unreleased packages (version `0.0.0` or missing)
 
         Description
         -----------
@@ -150,7 +206,7 @@ class Catalog:
           - `M`: Eudoxys managed package using `epm`
           - `P`: Setuptools supported (deprecated setup)
           - `C`: Command script supported
-          - 'E': Eudoxys support enabled (official release)
+          - `E`: Eudoxys support enabled (official release)
 
         - **Description**: The description from the `pyproject.toml` file.
         
@@ -173,7 +229,7 @@ class Catalog:
                         except KeyError:
                             version = ""
                         type = "M"
-                        if "tools" in info and "setuptools" in info["tools"] and "packages" in info["tools"]["setuptools"]:
+                        if "tool" in info and "setuptools" in info["tool"] and "packages" in info["tool"]["setuptools"]:
                             type += "P"
                         else:
                             type += "-"
@@ -185,8 +241,9 @@ class Catalog:
                             type += "E"
                         else:
                             type += "-"
-                        result[product] = {x:eval(x) for x in header}
-                        underline = {x:max(underline[x],len(eval(x))) for x in header}
+                        row = {"product":product,"version":version,"type":type,"description":description}
+                        result[product] = row
+                        underline = {x:max(underline[x],len(row[x])) for x in header}
             print(" ".join([x.title()+" "*(underline[x]-len(x)) for x in header]))
             print(" ".join(['-'*underline[x] for x in header]))
             for product,info in result.items():
@@ -194,8 +251,6 @@ class Catalog:
 
 
 if __name__ == "__main__":
-
-    import json
 
     catalog = Catalog()
     catalog.print()
