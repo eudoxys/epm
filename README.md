@@ -18,9 +18,11 @@ To get the index of available products
 
     epm index
 
-To get a list of installed products
+To get a list of repository names (not a list of locally installed packages)
 
     epm list
+
+An optional regular expression filters those names, for example `epm list '^epm$'`.
 
 To install a product
 
@@ -36,7 +38,10 @@ To uninstall a product
 
 To open a product's web page
 
-    epm open NAME
+    epm help NAME
+
+Without a product name, `epm help` opens EPM's own page. All commands can also be
+run as `python -m epm`, for example `python -m epm --help`.
 
 ## Options
 
@@ -50,13 +55,20 @@ Get the `epm` version number
 
 Get help
 
-    epm help
+    epm --help
 
 ## Technical Guide
 
-Products are added to the index by including them in the [LIST](https://github.com/eudoxys/epm/blob/main/epm/catalog.py#L16) list of the `Catalog` class.
+By default, [Catalog](https://github.com/eudoxys/epm/blob/main/epm/catalog.py)
+discovers products by scanning the Eudoxys organization's GitHub repositories:
+`Catalog.LIST = None` enables discovery rather than supplying an explicit list.
+The `list` command prints repository names, while `index` reads each repository's
+`pyproject.toml` from its `main` branch to display product metadata.
 
-Eudoxys repositories must include the `description` and `version` entries in the `project` section of their `pyproject.toml` file. In addition, the 'keywords' must include `eudoxys` for the product to appear in the `list` command output.
+Eudoxys repositories should include the `description` and `version` entries in the
+`project` section of their `pyproject.toml` file. Including `eudoxys` in the
+project's `keywords` adds the `E` flag in the index; it does not filter the `list`
+command's output.
 
 Product types include the following flags:
 

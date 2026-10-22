@@ -12,13 +12,13 @@ Options:
 
 Commands:
 
-    help [PACKAGE ...]: open help on packages
+    help [NAME ...]: open product web pages (defaults to epm)
 
-    index [PATTERN [...]]: output list of available packages
+    index: output the available product catalog with metadata
 
     install NAME [...]: install packages
 
-    list [PATTERN [...]]: output list of installed packages
+    list [PATTERN]: output repository names matching a regular expression
 
     uninstall NAME [...]: uninstall packages
 
@@ -173,4 +173,4 @@ def main(
 
 if __name__ == "__main__":
 
-    main(['index'])
+    sys.exit(main())
