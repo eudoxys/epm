@@ -108,7 +108,8 @@ def main(argv:list[str]|None=None) -> int:
     parser.add_argument("-w","--warning",action="store_true",
         help="enable warning messages from python")
     try:
-        args = parser.parse_args(argv)
+        # intermixed: Python 3.11 rejects NAMEs after an option (e.g. `index -a NAME`)
+        args = parser.parse_intermixed_args(argv)
     except SystemExit as err:
         return E_OK if err.code in (0,None) else E_SYNTAX
 
