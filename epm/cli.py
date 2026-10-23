@@ -56,7 +56,7 @@ COMMANDS = ["help","index","install","list","uninstall","upgrade"]
 
 def _version() -> str:
     try:
-        return importlib.metadata.version("epm")
+        return importlib.metadata.version("eudoxys")
     except Exception: # pylint: disable=broad-exception-caught
         return "dev"
 

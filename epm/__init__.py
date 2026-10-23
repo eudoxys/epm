@@ -106,7 +106,7 @@ flowchart LR
 
 try:
     import importlib.metadata
-    __version__ = importlib.metadata.version("epm")
+    __version__ = importlib.metadata.version("eudoxys")
 except Exception: # pylint: disable=broad-exception-caught
     __version__ = "dev"
 

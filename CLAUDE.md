@@ -54,6 +54,7 @@ CI (`validate.yaml`) runs pylint (informational) and pytest on 3.11–3.13.
 `publish-pypi.yaml` builds and uploads to PyPI when a tag `vX.Y.Z` is
 pushed; it fails unless the tag equals `v` + `[project] version`. It uses
 PyPI trusted publishing through the GitHub `pypi` environment (no token).
+The PyPI distribution name is `eudoxys`; `__version__` reads that name.
 
 ## Known rough edges (don't "fix" silently; mention or ask)
 
@@ -66,6 +67,10 @@ PyPI trusted publishing through the GitHub `pypi` environment (no token).
 - The `Makefile` uses `source`, which `/bin/sh` on Debian/Ubuntu (dash)
   lacks, so `make docs` falls back to the system `pip` there.
 - The `P` type flag reflects only `[tool.setuptools] packages`.
+- The distribution is named `eudoxys` (PyPI: `epm` is taken) while the repo,
+  import, and CLI are `epm`. `list` and `uninstall` match repo names against
+  installed distribution names, so `epm list` doesn't show epm itself and
+  `epm uninstall epm` reports it as not installed (`pip uninstall eudoxys` works).
 
 ## Working rules
 
