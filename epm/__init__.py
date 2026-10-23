@@ -1,176 +1,114 @@
-"""Eudoxys product manager
+"""Eudoxys Package Manager
 
-Syntax: epm [OPTIONS ...] COMMAND [ARGUMENTS ...]
+Syntax
+------
 
-Options:
+    epm COMMAND [NAME ...] [-h] [-a] [-d] [-v] [-w]
 
-    --debug: enable traceback of exceptions
+Positional arguments
+--------------------
 
-    -h|--help: output this help
+  - `COMMAND`: one of
 
-    -v|--version: output the EPM version number
+    - `help [NAME ...]`: open the GitHub page of each package (default `epm`)
 
-Commands:
+    - `index [PATTERN ...]`: output the table of available packages
 
-    help [PACKAGE ...]: open help on packages
+    - `install PATTERN [...]`: install the packages matching each pattern
 
-    index [PATTERN [...]]: output list of available packages
+    - `list [PATTERN ...]`: output the installed Eudoxys packages and versions
 
-    install NAME [...]: install packages
+    - `uninstall NAME [...]`: uninstall packages
 
-    list [PATTERN [...]]: output list of installed packages
+    - `upgrade PATTERN [...]`: upgrade the packages matching each pattern
 
-    uninstall NAME [...]: uninstall packages
+  - `NAME`/`PATTERN`: package name, or a regular expression matched against
+    the start of package names
 
-    upgrade NAME [...]: upgrade packages
+Optional arguments
+------------------
+
+  - `-a|--all`: `index` includes unreleased packages (version `0.0.0`)
+
+  - `-d|--debug`: enable debug logging and traceback on exceptions
+
+  - `-h|--help`: show this help message and exit
+
+  - `-v|--version`: output the `epm` version number and exit
+
+  - `-w|--warning`: enable warning messages from python
+
+Description
+-----------
+
+`epm` finds, installs, and upgrades the Python packages published in the
+[eudoxys](https://github.com/eudoxys) GitHub organization. Packages are
+installed with `pip install git+https://github.com/eudoxys/NAME`, i.e., from
+the head of each repository's `main` branch.
+
+Given the organization's repositories, `epm.Catalog` builds an index that is
+expected to satisfy:
+
+  1. **Coverage.** Every repository in the organization is in `Catalog.LIST`
+     (or, if `Catalog.LIST` is set, exactly that list).
+
+  2. **Metadata.** `Catalog.metadata(NAME)` returns the parsed
+     `pyproject.toml` of the repository's `main` branch, or `None` if it has
+     none. Repositories without one are omitted from `epm index`.
+
+  3. **Release filter.** `epm index` lists only packages whose `[project]
+     version` is greater than `0.0.0`, unless `--all` is given.
+
+Package types
+-------------
+
+The `Type` column of `epm index` has four flags (`-` when absent):
+
+  - `M`: Eudoxys managed package (has a `pyproject.toml`)
+
+  - `P`: `[tool.setuptools] packages` is set
+
+  - `C`: `[project.scripts]` defines a command line interface
+
+  - `E`: `[project] keywords` includes `eudoxys` (official Eudoxys release)
+
+Exit codes
+----------
+
+  - `0`: success
+
+  - `1`: invalid command line
+
+  - `2`: one or more `pip` commands failed
+
+  - `3`: no package matches a name
+
+  - `9`: unexpected exception (use `--debug` for the traceback)
+
+What is not promised
+--------------------
+
+  - Packages are installed from `main`, not from tagged releases, and `epm`
+    does not resolve or pin versions between Eudoxys packages; `pip` does.
+
+  - `pip` runs in the interpreter that runs `epm`; `epm` does not create or
+    select virtual environments.
+
+  - The catalog depends on the GitHub API, which rate-limits unauthenticated
+    requests (see `epm.catalog`).
+
+```mermaid
+flowchart LR
+    github[(GitHub eudoxys org)] --> Catalog --> index[epm index]
+    Catalog --> pip[pip install git+...] --> env[(Python environment)]
+```
 """
 
-import os
-import sys
-import re
-import importlib.metadata
-import warnings
-import webbrowser
 try:
-    from .catalog import Catalog
-except ImportError:
-    from catalog import Catalog
-try:
-    __version__ = importlib.metadata.version('epm')
-except importlib.metadata.PackageNotFoundError:
+    import importlib.metadata
+    __version__ = importlib.metadata.version("epm")
+except Exception: # pylint: disable=broad-exception-caught
     __version__ = "dev"
 
-DEBUG=False
-
-def main(
-    args:list=sys.argv[1:],
-    stdout:callable=lambda x: print(x,file=sys.stdout),
-    stderr:callable=lambda x: print(x if x.startswith("Syntax: ") else f"ERROR [epm]: {x}",file=sys.stderr),
-    exceptions:list=None
-    ):
-    """Main routine"""
-
-    global DEBUG
-
-    E_OK = 0
-    E_SYNTAX = 1
-    E_FAILED = 2
-    E_NOTFOUND = 3
-    E_EXCEPTION = 9
-
-    try:
-
-        if len(args) == 0:
-
-            stderr("\n".join([x for x in __doc__.split("\n") if x.startswith("Syntax: ")]))
-            return E_SYNTAX
-
-        #
-        # Options
-        #
-
-        if args[0] in ["--debug"]:
-
-            DEBUG = True
-            del args[0]
-
-        if args[0] in ["-h","--help"]:
-
-            stdout(__doc__)
-            return E_OK
-
-        if args[0] in ["-v","--version"]:
-
-            stdout(__version__)
-            return E_OK
-
-        #
-        # Commands
-        #
-
-        # help - open product webpage
-        if args[0] == "help":
-
-            for arg in args[1:] if len(args) > 1 else ["epm"]:
-
-                if not arg in Catalog().LIST:
-                    stderr(f"'{arg}' is not a valid Eudoxys product")
-                else:
-                    url = os.path.join(Catalog.REPO,arg)
-                    webbrowser.open(url,new=1,autoraise=True)
-
-            return E_OK
-
-        # list - get list of installed packages
-        elif args[0] == "list":
-
-            pattern = args[1] if len(args) > 1 else '.*'
-            catalog = Catalog()
-            print("\n".join(sorted([x for x in catalog.LIST if re.match(pattern,x)])))
-            return E_OK
-
-        # index - get list of available packages
-        elif args[0] == "index":
-
-            catalog = Catalog()
-            catalog.print(print=stdout,all=True)
-            return E_OK
-
-        # install - install packages
-        elif args[0] == "install" and len(args) > 1:
-
-            errors = 0
-            for arg in args[1:]:
-                catalog = Catalog(arg)
-                if not catalog.index:
-                    stderr(f"no packages match '{arg}'")
-                    return E_NOTFOUND
-                for product in catalog.index:
-                    code = os.system(f"pip install git+{catalog.repository(product)}")
-                    if code != 0:
-                        stderr(f"'{product}' install failed --> error code {code}")
-                        errors += 1
-            return E_OK if not errors else E_FAILED
-
-        # uninstall - uninstall packages
-        elif args[0] == "uninstall" and len(args) > 1:
-
-            errors = 0
-            for arg in args[1:]:
-                if arg in list():
-                    code = os.system(f"pip uninstall -y {arg}")
-                    if code != 0:
-                        stderr(f"'{arg}' uninstall failed --> error code {code}")
-                        errors != 1
-            return E_OK if not errors else E_FAILED
-
-        # upgrade - upgrade packages
-        elif args[0] == "upgrade" and len(args) > 1:
-
-            errors = 0
-            for arg in args[1:]:
-                catalog = Catalog(arg)
-                if not catalog.index:
-                    stderr(f"no packages match '{arg}'")
-                    return E_NOTFOUND
-                for product in catalog.index:
-                    code = os.system(f"pip install --upgrade git+{catalog.repository(product)}")
-                    if code != 0:
-                        stderr(f"'{product}' install failed --> error code {code}")
-                        errors += 1
-            return E_OK if not errors else E_FAILED
-
-        raise ValueError(f"'{args[0]}' is an invalid command")
-
-    except:
-        if DEBUG:
-            raise
-        e_type,e_value,e_trace = sys.exc_info()
-        if e_type in exceptions if exceptions else []:
-            raise
-        stderr(f"{e_type.__name__} {e_value}")
-        return E_EXCEPTION
-
-if __name__ == "__main__":
-
-    main(['index'])
+from epm.catalog import Catalog, CatalogError
+from epm.cli import main

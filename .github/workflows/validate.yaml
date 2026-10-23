@@ -1,0 +1,61 @@
+name: Validation
+
+# Run only when code, tests, or dependencies change
+on:
+  push:
+    branches: [ main ]
+    paths: &paths
+      - "epm/**"
+      - "!**/*.md"
+      - "requirements.txt"
+      - "pyproject.toml"
+      - ".github/workflows/validate.yaml"
+  pull_request:
+    branches: [ main ]
+    paths: *paths
+  workflow_dispatch:
+
+# A newer push to the same branch/PR cancels the run in progress
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15 # hard stop on a hung request
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"] # must satisfy requires-python
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: pip
+        cache-dependency-path: requirements.txt
+
+    - name: Install packages
+      run: |
+        pip install --upgrade pip
+        pip install . pytest pylint   # non-editable: catches missing package-data
+
+    - name: Analyse code
+      run: |
+        cd epm
+        pylint --fail-under 0 *.py
+
+    - name: Run tests
+      env:
+        # authenticates the GitHub API scan in the network tests (rate limit)
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        mkdir -p $HOME/.github && echo "$GITHUB_TOKEN" > $HOME/.github/access-token
+        pytest --durations=10
+
+    - name: Check manifest
+      if: matrix.python-version == '3.12'
+      run: python .github/check_manifest.py
