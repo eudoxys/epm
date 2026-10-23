@@ -18,7 +18,7 @@ Update this file in the same PR that adds, moves, or deletes a file.
 - Change how packages are found: `epm/catalog.py` `Catalog.scanrepos`; test in `epm/_test/test_network.py`
 - Fix a test: `epm/_test/conftest.py` holds the synthetic catalog
 - Update docs: docstrings, then `make docs`
-- Release: `pyproject.toml` version; see the eudoxys-package skill checklist
+- Release: `pyproject.toml` version; see the eudoxys-package skill checklist; pushing tag `vX.Y.Z` publishes to PyPI (`.github/workflows/publish-pypi.yaml`)
 
 ## Package
 
@@ -54,7 +54,7 @@ Update this file in the same PR that adds, moves, or deletes a file.
 | `LICENSE` | MIT | |
 | `.gitignore` | | GitHub Python template |
 | `.gitattributes` | | `* text=auto` |
-| `.github/workflows/*.yaml` | CI: tests, docs, approved-issue check | |
+| `.github/workflows/*.yaml` | CI: tests, docs, approved-issue check, issue assignment, PyPI publish | `publish-pypi.yaml` runs on `vX.Y.Z` tags |
 | `.github/check_manifest.py` | checks this file | run in `validate.yaml` |
 
 ## Don't read

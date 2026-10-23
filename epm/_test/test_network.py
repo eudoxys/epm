@@ -16,6 +16,7 @@ def test_scan_finds_epm(monkeypatch):
 def test_epm_metadata(monkeypatch):
     monkeypatch.setattr(Catalog,"LIST",["epm"])
     info = Catalog("epm").metadata("epm")
-    assert info["project"]["name"] == "epm"
+    # reads main: "epm" until the PyPI rename merges, then "eudoxys"
+    assert info["project"]["name"] in ("epm","eudoxys")
     assert "eudoxys" in info["project"]["keywords"]
     assert "epm" in info["project"]["scripts"]

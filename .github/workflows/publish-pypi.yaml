@@ -1,0 +1,88 @@
+name: Publish to PyPI
+
+# Builds the sdist and wheel and uploads them to PyPI when a version tag
+# vX.Y.Z is pushed (see the release checklist in the eudoxys-package skill:
+# merge the version bump to main, then tag it).
+#
+# Uses PyPI trusted publishing (OIDC), so no API token is stored. One-time
+# setup on PyPI: add a trusted publisher for this repository with workflow
+# `publish-pypi.yaml` and environment `pypi`; on GitHub, create the `pypi`
+# environment (optionally with required reviewers).
+#
+# The tag must match `[project] version` in pyproject.toml, and the version
+# must be greater than 0.0.0 (0.0.0 means unreleased).
+
+on:
+  push:
+    tags: ["v[0-9]+.[0-9]+.[0-9]+*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-pypi-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Check tag matches version
+      env:
+        TAG: ${{ github.ref_name }}
+      run: |
+        python - <<'EOF'
+        import os,sys,tomllib
+        with open("pyproject.toml","rb") as fh:
+            version = tomllib.load(fh)["project"]["version"]
+        tag = os.environ["TAG"]
+        if tag != f"v{version}":
+            sys.exit(f"tag {tag} does not match pyproject.toml version {version}")
+        if version == "0.0.0":
+            sys.exit("version 0.0.0 is unreleased; bump it before tagging")
+        print(f"publishing version {version}")
+        EOF
+
+    - name: Build
+      run: |
+        pip install --upgrade pip
+        pip install build twine
+        python -m build
+        twine check --strict dist/*
+
+    - name: Test the wheel
+      run: |
+        pip install dist/*.whl pytest
+        pytest -m "not network"
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: dist
+        path: dist/
+        if-no-files-found: error
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: pypi
+      url: https://pypi.org/p/eudoxys
+    permissions:
+      id-token: write # trusted publishing
+    steps:
+    - uses: actions/download-artifact@v4
+      with:
+        name: dist
+        path: dist/
+
+    - name: Publish
+      uses: pypa/gh-action-pypi-publish@release/v1
