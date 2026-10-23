@@ -51,6 +51,10 @@ make docs
 
 CI (`validate.yaml`) runs pylint (informational) and pytest on 3.11–3.13.
 
+`publish-pypi.yaml` builds and uploads to PyPI when a tag `vX.Y.Z` is
+pushed; it fails unless the tag equals `v` + `[project] version`. It uses
+PyPI trusted publishing through the GitHub `pypi` environment (no token).
+
 ## Known rough edges (don't "fix" silently; mention or ask)
 
 - Version filtering in `Catalog.print` compares strings (`"0.10.0" > "0.0.0"`
