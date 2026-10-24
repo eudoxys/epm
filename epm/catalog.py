@@ -15,6 +15,22 @@ outputs
     ------- ------- ---- -----------------------
     epm     0.0.1   MPCE Eudoxys Package Manager
 
+Type codes
+----------
+
+The `Type` column has four flags, one per position, with `-` in a position
+whose condition does not hold:
+
+| Position | Code | Meaning                                  | Condition in `pyproject.toml`            |
+| :------: | :--: | ---------------------------------------- | ---------------------------------------- |
+| 1        | `M`  | Eudoxys managed package                  | the file exists and has `[project]`      |
+| 2        | `P`  | Setuptools package list                  | `[tool.setuptools] packages` is set      |
+| 3        | `C`  | Command line interface                   | `[project.scripts]` defines a command    |
+| 4        | `E`  | Eudoxys support enabled (official release) | `[project] keywords` includes `eudoxys` |
+
+Packages without a `pyproject.toml` are not listed, so position 1 is always
+`M`.
+
 Caveats
 -------
 
