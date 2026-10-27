@@ -14,7 +14,7 @@ dependencies = {file=["requirements.txt"]}
 
 [project]
 name = "eudoxys" # PyPI distribution name ("epm" is taken); import and CLI stay "epm"
-version = "0.0.1" # 0.0.0 = unreleased (hidden by `epm index`)
+version = "26.10.0" # 0.0.0 = unreleased (hidden by `epm index`)
 description = "Eudoxys Package Manager"
 authors = [
     {name = "David P. Chassin <dchassin@eudoxys.com>"},
