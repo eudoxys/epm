@@ -9,7 +9,7 @@ General Eudoxys package conventions are in the `eudoxys-package` skill
 `epm`, the Eudoxys Package Manager: a small CLI that lists the repositories
 of the `eudoxys` GitHub organization, reads each one's `pyproject.toml` from
 `main`, and installs/upgrades/uninstalls them with `pip install git+...`.
-Python 3.11+ (uses `tomllib`), alpha. No sibling Eudoxys dependencies; only
+Python 3.11+ (uses `tomllib`), beta. No sibling Eudoxys dependencies; only
 `requests`.
 
 - Docs site: https://www.eudoxys.com/epm (pdoc from docstrings)

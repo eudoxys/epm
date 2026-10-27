@@ -27,7 +27,7 @@ requires-python = ">=3.11" # tomllib; CI tests 3.11 through 3.13
 keywords = ["eudoxys","package","manager"] # "eudoxys" marks an official Eudoxys release
 license-files = ["LICENSE"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Environment :: Console",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3 :: Only",
