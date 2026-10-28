@@ -11,7 +11,7 @@ outputs
 
     Product Version Type Description
     ------- ------- ---- -----------------------
-    epm     0.0.1   MPCE Eudoxys Package Manager
+    epm     26.10.0 MPCE Eudoxys Package Manager
 
 (versions and descriptions are read from each repository's `main` branch at
 run time, so they change as packages are released).

@@ -9,7 +9,7 @@ General Eudoxys package conventions are in the `eudoxys-package` skill
 `epm`, the Eudoxys Package Manager: a small CLI that lists the repositories
 of the `eudoxys` GitHub organization, reads each one's `pyproject.toml` from
 `main`, and installs/upgrades/uninstalls them with `pip install git+...`.
-Python 3.11+ (uses `tomllib`), alpha. No sibling Eudoxys dependencies; only
+Python 3.11+ (uses `tomllib`), beta. No sibling Eudoxys dependencies; only
 `requests`.
 
 - Docs site: https://www.eudoxys.com/epm (pdoc from docstrings)
@@ -51,8 +51,8 @@ make docs
 
 CI (`validate.yaml`) runs pylint (informational) and pytest on 3.11–3.13.
 
-`publish-pypi.yaml` builds and uploads to PyPI when a tag `vX.Y.Z` is
-pushed; it fails unless the tag equals `v` + `[project] version`. It uses
+`publish-pypi.yaml` builds and uploads to PyPI when a tag `X.Y.Z` (the bare
+version, no `v`) is pushed; it fails unless the tag equals `[project] version`. It uses
 PyPI trusted publishing through the GitHub `pypi` environment (no token).
 The PyPI distribution name is `eudoxys`; `__version__` reads that name.
 

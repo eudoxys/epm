@@ -14,7 +14,7 @@ dependencies = {file=["requirements.txt"]}
 
 [project]
 name = "eudoxys" # PyPI distribution name ("epm" is taken); import and CLI stay "epm"
-version = "0.0.1" # 0.0.0 = unreleased (hidden by `epm index`)
+version = "26.10.0" # 0.0.0 = unreleased (hidden by `epm index`)
 description = "Eudoxys Package Manager"
 authors = [
     {name = "David P. Chassin <dchassin@eudoxys.com>"},
@@ -27,7 +27,7 @@ requires-python = ">=3.11" # tomllib; CI tests 3.11 through 3.13
 keywords = ["eudoxys","package","manager"] # "eudoxys" marks an official Eudoxys release
 license-files = ["LICENSE"]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Environment :: Console",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3 :: Only",

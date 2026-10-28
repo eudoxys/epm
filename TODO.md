@@ -6,7 +6,7 @@
 
 # Release
 
-- [ ] `0.1.0`: follow the release checklist in the `eudoxys-package` skill
+- [ ] `26.10.0`: follow the release checklist in the `eudoxys-package` skill (first CalVer release; PyPI `eudoxys`)
 
 # Features
 

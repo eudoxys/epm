@@ -83,7 +83,7 @@ outputs
 
     Product Version Type Description
     ------- ------- ---- -----------------------
-    epm     0.0.1   MPCE Eudoxys Package Manager
+    epm     26.10.0 MPCE Eudoxys Package Manager
 
 ## Python
 
