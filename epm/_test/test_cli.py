@@ -88,3 +88,34 @@ def test_exception(monkeypatch,capsys):
     assert "ERROR [epm]: RuntimeError boom" in capsys.readouterr().err
     with pytest.raises(RuntimeError):
         cli.main(["index","--debug"])
+
+@pytest.mark.parametrize("older,newer",[
+    ("0.9.1","0.10.0"),
+    ("1.2","1.2.1"),
+    ("1.0.0rc1","1.0.0"),
+    ("0.0.0","0.0.1"),
+    ("26.9.0","26.10.0"),
+    ])
+def test_version_key(older,newer):
+    assert cli._version_key(older) < cli._version_key(newer) # pylint: disable=protected-access
+
+def test_version_key_equal():
+    assert cli._version_key("1.2") == cli._version_key("1.2.0") # pylint: disable=protected-access
+
+def test_checkup(catalog,monkeypatch,capsys): # pylint: disable=unused-argument
+    monkeypatch.setattr(cli,"_installed",lambda: {"released":"1.2.0","numpy":"0.1"})
+    assert cli.main(["checkup"]) == cli.E_OK
+    lines = capsys.readouterr().out.splitlines()
+    assert lines[0].split() == ["Product","Installed","Latest"]
+    assert [x.split() for x in lines[2:]] == [["released","1.2.0","1.2.3"]]
+
+def test_checkup_up_to_date(catalog,monkeypatch,pip_calls,capsys): # pylint: disable=unused-argument
+    monkeypatch.setattr(cli,"_installed",lambda: {"released":"1.2.3","unreleased":"0.0.0"})
+    assert cli.main(["checkup"]) == cli.E_OK
+    assert capsys.readouterr().out == ""
+    assert not pip_calls
+
+def test_checkup_pattern(catalog,monkeypatch,capsys): # pylint: disable=unused-argument
+    monkeypatch.setattr(cli,"_installed",lambda: {"released":"1.0","noproject":"0.1"})
+    assert cli.main(["checkup","no"]) == cli.E_OK # no pyproject.toml -> skipped
+    assert capsys.readouterr().out == ""

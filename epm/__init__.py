@@ -10,6 +10,9 @@ Positional arguments
 
   - `COMMAND`: one of
 
+    - `checkup [PATTERN ...]`: output the installed Eudoxys packages that are
+      older than the version on `main` (nothing when all are up to date)
+
     - `help [NAME ...]`: open the GitHub page of each package (default `epm`)
 
     - `index [PATTERN ...]`: output the table of available packages

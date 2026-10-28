@@ -30,6 +30,10 @@ List the installed Eudoxys packages
 
     epm list
 
+Report installed Eudoxys packages that are out of date (then `epm upgrade NAME`)
+
+    epm checkup
+
 Install, upgrade, or uninstall a package
 
     epm install NAME
