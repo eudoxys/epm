@@ -16,6 +16,15 @@ outputs
 (versions and descriptions are read from each repository's `main` branch at
 run time, so they change as packages are released).
 
+    epm checkup
+
+outputs the installed Eudoxys packages whose version is older than the one
+on `main` (nothing when all are up to date), e.g.,
+
+    Product Installed Latest
+    ------- --------- ------
+    pkgname 0.1.0     0.2.0
+
 Caveats
 -------
 
@@ -51,7 +60,7 @@ E_NOTFOUND = 3
 E_EXCEPTION = 9
 """Exit code: unexpected exception (use `--debug` for the traceback)"""
 
-COMMANDS = ["help","index","install","list","uninstall","upgrade"]
+COMMANDS = ["checkup","help","index","install","list","uninstall","upgrade"]
 """Valid commands"""
 
 def _version() -> str:
@@ -68,6 +77,33 @@ def _installed() -> dict[str,str]:
         if name:
             result[name.lower()] = dist.version
     return result
+
+def _version_key(version:str) -> tuple:
+    """Sort key for a version string (numeric release parts, then the rest)
+
+    `"0.10.0"` sorts after `"0.9.1"`, and a pre-release such as `"1.0.0rc1"`
+    sorts before `"1.0.0"`. This is not a full PEP 440 parser (e.g., a
+    post-release suffix also sorts before the final release).
+    """
+    release = []
+    rest = ""
+    for part in version.strip().lstrip("vV").split("."):
+        digits = ""
+        for char in part:
+            if not char.isdigit():
+                break
+            digits += char
+        if not digits:
+            rest = part
+            break
+        release.append(int(digits))
+        if digits != part:
+            rest = part[len(digits):]
+            break
+    while release and release[-1] == 0:
+        release.pop()
+    # a final release (no suffix) sorts after its pre-releases
+    return (tuple(release),rest == "",rest)
 
 def _pip(*args:str) -> int:
     """Run pip in the interpreter running epm and return its exit code"""
@@ -98,7 +134,7 @@ def main(argv:list[str]|None=None) -> int:
     parser.add_argument("command",choices=COMMANDS,
         help="command to run (see https://www.eudoxys.com/epm)")
     parser.add_argument("names",nargs="*",metavar="NAME",
-        help="package names (regular expressions for index, install, upgrade, and list)")
+        help="package names (regular expressions for checkup, index, install, list, and upgrade)")
     parser.add_argument("-a","--all",action="store_true",
         help="index: include unreleased packages (version 0.0.0)")
     parser.add_argument("-d","--debug",action="store_true",
@@ -124,6 +160,27 @@ def main(argv:list[str]|None=None) -> int:
             raise
         _error(f"{type(err).__name__} {err}")
         return E_EXCEPTION
+
+def _checkup(args:argparse.Namespace) -> int:
+    installed = _installed()
+    catalog = Catalog(args.names or None)
+    rows = []
+    for name in sorted(x for x in catalog.index if x.lower() in installed):
+        info = catalog.metadata(name)
+        try:
+            latest = info["project"]["version"]
+        except (KeyError,TypeError):
+            _logger.debug("%s has no [project] version",name)
+            continue
+        current = installed[name.lower()]
+        if _version_key(current) < _version_key(latest):
+            rows.append([name,current,latest])
+    if rows:
+        header = ["Product","Installed","Latest"]
+        width = [max(len(x) for x in column) for column in zip(header,*rows)]
+        for row in [header,["-"*x for x in width],*rows]:
+            print(" ".join(x.ljust(n) for x,n in zip(row,width)).rstrip())
+    return E_OK
 
 def _help(args:argparse.Namespace) -> int:
     catalog = Catalog()
@@ -188,6 +245,7 @@ def _uninstall(args:argparse.Namespace) -> int:
     return E_OK if not errors else E_FAILED
 
 _COMMANDS = {
+    "checkup": _checkup,
     "help": _help,
     "index": _index,
     "install": _install,
